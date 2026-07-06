@@ -1,0 +1,23 @@
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
+
+from .config import Settings
+
+settings = Settings()
+
+engine = create_async_engine(settings.DATABASE_URL, future=True, echo=False)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+async def get_async_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session
+
+async def check_db() -> bool:
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        return False
